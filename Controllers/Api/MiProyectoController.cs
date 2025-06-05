@@ -1,22 +1,31 @@
 using Microsoft.AspNetCore.Mvc;
-using TuProyecto.Models;
+using MongoDB.Driver;
 
-namespace TuProyecto.Controllers.Api
+
+[ApiController]
+[Route("mi-proyecto")]
+public class MiProyectoController : ControllerBase
 {
-    [ApiController]
-    [Route("api/controller")]
-    public class MiProyectoController : ControllerBase
+    [HttpGet("Integrantes")]
+    public ActionResult<MiProyecto> Integrantes()
     {
-        [HttpGet("Integrantes")]
-        public ActionResult<MiProyecto> Integrantes()
+        var proyecto = new MiProyecto
         {
-            var proyecto = new MiProyecto
-            {
-                Integrante1 = "Maria Fernanda Rios Hernandez",
-                Integrante2 = "Maria Fernanda Demeza Bermudez"
-            };
+            Integrante1 = "Maria Fernanda Rios Hernandez",
+            Integrante2 = "Maria Fernanda Demeza Bermudez"
+        };
 
-            return Ok(proyecto);
-        }
+        return Ok(proyecto);
     }
+
+[HttpGet("presentacion")]
+    public IActionResult Presentacion() {
+        MongoClient client = new MongoClient(CadenaConexion.MONGO_DB);
+        var db = client.GetDatabase("Escuela_Rios_Demeza");
+        var collection = db.GetCollection<Equipo>("Equipo");
+
+        var list = collection.Find(FilterDefinition<Equipo>.Empty).ToList();
+        return Ok(list);
+    }
+
 }
