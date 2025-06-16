@@ -37,7 +37,7 @@ public class ApiUsuariosController : ControllerBase
         return Ok(list);
     }
 
-[HttpDelete ("{id}")]
+    [HttpDelete("{id}")]
     public IActionResult Delete(string id)
     {
         var filter = Builders<Usuarios>.Filter.Eq(x => x.Id, id);
@@ -47,5 +47,94 @@ public class ApiUsuariosController : ControllerBase
             this.collection.DeleteOne(filter);
         }
         return NoContent();
+    }
+
+    [HttpPost]
+    public IActionResult Create(UsuarioRequest model)
+    {
+        // 1. Validar el modelo para que contenga datos
+        if (string.IsNullOrWhiteSpace(model.Correo))
+        {
+            return BadRequest("El correo es requerido");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Password))
+        {
+            return BadRequest("El password es requerido");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Nombre))
+        {
+            return BadRequest("El nombre es requerido");
+        }
+        //Validar que el correo no existe
+        var filter = Builders<Usuarios>.Filter.Eq(x => x.Correo, model.Correo);
+        var item = this.collection.Find(filter).FirstOrDefault();
+        if (item != null)
+        {
+            return BadRequest("El correo " + model.Correo + " ya existe en la base de datos");
+        }
+
+        Usuarios bd = new Usuarios();
+        bd.Nombre = model.Nombre;
+        bd.Correo = model.Correo;
+        bd.Password = model.Password;
+
+        this.collection.InsertOne(bd);
+
+        return Ok();
+    }
+
+    [HttpGet("{id}")]
+    public IActionResult Read(string id)
+    {
+        var filter = Builders<Usuarios>.Filter.Eq(x => x.Id, id);
+        var item = this.collection.Find(filter).FirstOrDefault();
+        if (item == null)
+        {
+            return NotFound("No existe un usuario con el ID proporcionado");
+        }
+        return Ok(item);
+    }
+    
+     [HttpPut("{id}")]
+    public IActionResult Update(string id, UsuarioRequest model)
+    {
+        // 1. Validar el modelo para que contenga datos
+        if (string.IsNullOrWhiteSpace(model.Correo))
+        {
+            return BadRequest("El correo es requerido");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Password))
+        {
+            return BadRequest("El password es requerido");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Nombre))
+        {
+            return BadRequest("El nombre es requerido");
+        }
+         var filter = Builders<Usuarios>.Filter.Eq(x => x.Id, id);
+        var item = this.collection.Find(filter).FirstOrDefault();
+        if (item == null)
+        {
+            return NotFound("No existe un usuario con el ID proporcionado");
+        }
+        //Validar que el correo no existe
+        var filterCorreo = Builders<Usuarios>.Filter.Eq(x => x.Correo, model.Correo);
+        var itemExistente = this.collection.Find(filterCorreo).FirstOrDefault();
+        if (itemExistente != null && itemExistente.Id != id)
+        {
+            return BadRequest("El correo " + model.Correo + " ya existe en la base de datos");
+        }
+        var updateOptions = Builders<Usuarios>.Update
+        .Set(x => x.Correo, model.Correo)
+        .Set(x => x.Nombre, model.Nombre)
+        .Set(x => x.Password, model.Password);
+
+        this.collection.UpdateOne(filter, updateOptions);
+
+        return Ok();
     }
 }
